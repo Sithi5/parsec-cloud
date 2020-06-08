@@ -11,7 +11,14 @@ from tests.backend.common import realm_create
 from tests.backend.common import vlob_create, block_create
 
 async def realm_stats(sock, realm_id):
-    return {"status": "ok", "data_size": 0}
+	raw_rep = await sock.send(
+		realm_stats_serializer.req_dumps(
+			{"cmd": "realm_stats", "realm_id": realm_id}
+		)
+	)
+	raw_rep = await sock.recv()
+	print(realm_stats_serializer.rep_loads(raw_rep))
+	return {"status": "ok", "data_size": 0}
 
 @pytest.mark.trio
 async def test_realm_stats_ok(backend, alice, alice_backend_sock, administration_backend_sock, realm):
