@@ -3,7 +3,7 @@
 import pytest
 from uuid import uuid4
 
-from tests.backend.common import realm_create, realm_status, realm_stats
+from tests.backend.common import realm_create, realm_stats
 from tests.backend.common import vlob_create, block_create
 
 
