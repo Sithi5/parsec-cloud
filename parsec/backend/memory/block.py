@@ -15,7 +15,6 @@ from parsec.backend.block import (
     BlockInMaintenanceError,
 )
 
-
 @attr.s(auto_attribs=True)
 class BlockMeta:
     realm_id: UUID
@@ -85,7 +84,6 @@ class MemoryBlockComponent(BaseBlockComponent):
 
         await self._blockstore_component.create(organization_id, block_id, block)
         self._blockmetas[(organization_id, block_id)] = BlockMeta(realm_id, len(block))
-
 
 class MemoryBlockStoreComponent(BaseBlockStoreComponent):
     def __init__(self):
