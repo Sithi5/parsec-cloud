@@ -82,6 +82,7 @@ class RealmStatus:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStats:
     size: int
+    test: int
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmGrantedRole:
@@ -189,10 +190,22 @@ class BaseRealmComponent:
     @catch_protocol_errors
     async def api_realm_stats(self, client_ctx, msg):
         msg = realm_stats_serializer.req_load(msg)
+
+        try:
+            stats = await self.get_stats(
+                client_ctx.organization_id, client_ctx.device_id, msg["realm_id"]
+            )
+
+        except RealmAccessError:
+            return realm_status_serializer.rep_dump({"status": "not_allowed"})
+
+        except RealmNotFoundError as exc:
+            return realm_status_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+
         return realm_stats_serializer.rep_dump(
             {
                 "status": "ok",
-                "data_size": 0,
+                "data_size": stats.data_size,
             }
         )
 

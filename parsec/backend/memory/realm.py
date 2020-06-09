@@ -2,6 +2,7 @@
 
 import attr
 import pendulum
+from sys import getsizeof
 from uuid import UUID
 from typing import List, Dict, Optional
 
@@ -107,7 +108,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
     ) -> RealmStats:
         realm = self._get_realm(organization_id, realm_id)
-        return 10
+        RealmStats.data_size = getsizeof(realm)
+        return RealmStats
 
     async def get_current_roles(
         self, organization_id: OrganizationID, realm_id: UUID
