@@ -115,6 +115,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         for (_, _), blockmeta_value in self._block_component._blockmetas.items():
             if blockmeta_value.realm_id == realm_id:
                 RealmStats.data_size += blockmeta_value.size
+        for (_, _), vlobmeta_value in self._vlob_component._vlobs.items():
+            if vlobmeta_value.realm_id == realm_id:
+                RealmStats.data_size += sum(len(blob) for (blob, _, _) in vlobmeta_value.data)
 
         return RealmStats
 

@@ -19,7 +19,7 @@ async def test_realm_stats_ok(backend, alice, alice_backend_sock, administration
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {
         "status": "ok",
-        "data_size": 0,
+        "data_size": 4,
     }
 
     # Create new data
@@ -27,12 +27,13 @@ async def test_realm_stats_ok(backend, alice, alice_backend_sock, administration
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {
         "status": "ok",
-        "data_size": 4,
+        "data_size": 8,
     }
     await block_create(alice_backend_sock, realm_id=realm, block_id=uuid4(), block=b"1234")
     await block_create(alice_backend_sock, realm_id=realm, block_id=uuid4(), block=b"1234")
+    await vlob_create(alice_backend_sock, realm_id=realm, vlob_id=uuid4(), blob=b"1234")
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {
         "status": "ok",
-        "data_size": 12,
+        "data_size": 20,
     }
