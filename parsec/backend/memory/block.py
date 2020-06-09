@@ -15,7 +15,6 @@ from parsec.backend.block import (
     BlockInMaintenanceError,
 )
 
-
 @attr.s(auto_attribs=True)
 class BlockMeta:
     realm_id: UUID
