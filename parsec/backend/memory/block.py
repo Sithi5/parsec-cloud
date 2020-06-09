@@ -80,6 +80,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         realm_id: UUID,
         block: bytes,
     ) -> None:
+
         self._check_realm_write_access(organization_id, realm_id, author.user_id)
 
         await self._blockstore_component.create(organization_id, block_id, block)

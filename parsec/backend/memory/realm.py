@@ -29,7 +29,7 @@ from parsec.backend.realm import (
 from parsec.backend.user import BaseUserComponent, UserNotFoundError
 from parsec.backend.message import BaseMessageComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
-
+from parsec.backend.memory.block import MemoryBlockComponent
 
 @attr.s
 class Realm:
@@ -54,6 +54,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         self._user_component = None
         self._message_component = None
         self._vlob_component = None
+        self._block_component = None
         self._realms = {}
         self._maintenance_reencryption_is_finished_hook = None
 
@@ -62,11 +63,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         user: BaseUserComponent,
         message: BaseMessageComponent,
         vlob: MemoryVlobComponent,
+        block: MemoryBlockComponent,
         **other_components,
     ):
         self._user_component = user
         self._message_component = message
         self._vlob_component = vlob
+        self._block_component = block
 
     def _get_realm(self, organization_id, realm_id):
         try:
@@ -107,8 +110,12 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
     ) -> RealmStats:
-        realm = self._get_realm(organization_id, realm_id)
-        RealmStats.data_size = getsizeof(realm)
+        from pprint import pprint
+        RealmStats.data_size = 0
+        for (_, _), blockmeta_value in self._block_component._blockmetas.items():
+            if blockmeta_value.realm_id == realm_id:
+                RealmStats.data_size += blockmeta_value.size
+
         return RealmStats
 
     async def get_current_roles(
