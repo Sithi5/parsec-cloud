@@ -14,6 +14,7 @@ from parsec.api.protocol import (
     RealmRole,
     MaintenanceType,
     realm_status_serializer,
+    realm_stats_serializer,
     realm_create_serializer,
     realm_get_role_certificates_serializer,
     realm_update_roles_serializer,
@@ -78,6 +79,9 @@ class RealmStatus:
     def in_maintenance(self) -> bool:
         return bool(self.maintenance_type)
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class RealmStats:
+    size: int
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmGrantedRole:
@@ -178,6 +182,17 @@ class BaseRealmComponent:
                 "maintenance_started_on": status.maintenance_started_on,
                 "maintenance_started_by": status.maintenance_started_by,
                 "encryption_revision": status.encryption_revision,
+            }
+        )
+
+    @api("realm_stats")
+    @catch_protocol_errors
+    async def api_realm_stats(self, client_ctx, msg):
+        msg = realm_stats_serializer.req_load(msg)
+        return realm_stats_serializer.rep_dump(
+            {
+                "status": "ok",
+                "data_size": 0,
             }
         )
 
@@ -364,6 +379,16 @@ class BaseRealmComponent:
     async def get_status(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
     ) -> RealmStatus:
+        """
+        Raises:
+            RealmNotFoundError
+            RealmAccessError
+        """
+        raise NotImplementedError()
+
+    async def get_stats(
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+    ) -> RealmStats:
         """
         Raises:
             RealmNotFoundError
