@@ -1,12 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import pytest
-from uuid import UUID
-
-from parsec.api.data import RealmRoleCertificateContent, UserProfile
-from parsec.api.protocol import RealmRole
-
 from uuid import uuid4
+
+from parsec.api.protocol import realm_stats_serializer
 from tests.backend.common import realm_create
 from tests.backend.common import vlob_create, block_create
 
