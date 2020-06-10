@@ -34,6 +34,7 @@ async def test_realm_stats_ok(
         "vlobs_size": 4,
     }
 
+<<<<<<< HEAD
     # test with non existant realm
     rep = await realm_stats(alice_backend_sock, realm_id=REALM_ID_FAKE)
     assert rep == {
@@ -45,4 +46,13 @@ async def test_realm_stats_ok(
     rep = await realm_stats(bob_backend_sock, realm_id=realm)
     assert rep == {
         "status": "not_allowed",
+=======
+    # test with random realm, need to check in backend to send status KO
+    rep = await realm_stats(alice_backend_sock, realm_id=uuid4())
+    print(rep)
+    assert rep == {
+        "status": "ok",
+        "blocks_size": 0,
+        "vlobs_size": 0,
+>>>>>>> e93a78cbd5be99fe6b40772e62bbbb776f17afeb
     }

@@ -1,0 +1,3 @@
+[
+  "tests/backend/realm/test_realm_stats.py::test_realm_stats_ok"
+]
