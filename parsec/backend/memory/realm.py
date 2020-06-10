@@ -112,14 +112,12 @@ class MemoryRealmComponent(BaseRealmComponent):
     ) -> RealmStats:
         RealmStats.blocks_size = 0
         RealmStats.vlobs_size = 0
-        for (_, _), blockmeta_value in self._block_component._blockmetas.items():
-            if blockmeta_value.realm_id == realm_id:
-                RealmStats.blocks_size += blockmeta_value.size
-        for (_, _), vlobmeta_value in self._vlob_component._vlobs.items():
-            if vlobmeta_value.realm_id == realm_id:
-                RealmStats.vlobs_size += sum(
-                    len(blob) for (blob, _, _) in vlobmeta_value.data
-                )
+        for value in self._block_component._blockmetas.values():
+            if value.realm_id == realm_id:
+                RealmStats.blocks_size += value.size
+        for value in self._vlob_component._vlobs.values():
+            if value.realm_id == realm_id:
+                RealmStats.vlobs_size += sum(len(blob) for (blob, _, _) in value.data)
 
         return RealmStats
 

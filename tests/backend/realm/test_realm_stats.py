@@ -28,3 +28,12 @@ async def test_realm_stats_ok(backend, alice_backend_sock, realm):
         "blocks_size": 4,
         "vlobs_size": 4,
     }
+
+    # test with random realm, need to check in backend to send status KO
+    rep = await realm_stats(alice_backend_sock, realm_id=uuid4())
+    print(rep)
+    assert rep == {
+        "status": "ok",
+        "blocks_size": 0,
+        "vlobs_size": 0,
+    }
