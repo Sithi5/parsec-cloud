@@ -79,6 +79,7 @@ class RealmStatus:
     def in_maintenance(self) -> bool:
         return bool(self.maintenance_type)
 
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStats:
     size: int
 

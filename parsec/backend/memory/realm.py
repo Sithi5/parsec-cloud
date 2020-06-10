@@ -2,7 +2,6 @@
 
 import attr
 import pendulum
-from sys import getsizeof
 from uuid import UUID
 from typing import List, Dict, Optional
 
@@ -110,7 +109,6 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
     ) -> RealmStats:
-        from pprint import pprint
         RealmStats.data_size = 0
         for (_, _), blockmeta_value in self._block_component._blockmetas.items():
             if blockmeta_value.realm_id == realm_id:

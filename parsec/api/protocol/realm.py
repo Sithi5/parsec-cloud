@@ -63,12 +63,14 @@ class RealmStatusRepSchema(BaseRepSchema):
 
 realm_status_serializer = CmdSerializer(RealmStatusReqSchema, RealmStatusRepSchema)
 
+
 class RealmStatsReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
 
 
 class RealmStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
+
 
 realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)
 
