@@ -79,9 +79,11 @@ class RealmStatus:
     def in_maintenance(self) -> bool:
         return bool(self.maintenance_type)
 
+
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStats:
     size: int
+
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmGrantedRole:
@@ -104,7 +106,10 @@ class BaseRealmComponent:
     @catch_protocol_errors
     async def api_realm_create(self, client_ctx, msg):
         if client_ctx.profile == UserProfile.OUTSIDER:
-            return {"status": "not_allowed", "reason": "Outsider user cannot create realm"}
+            return {
+                "status": "not_allowed",
+                "reason": "Outsider user cannot create realm",
+            }
 
         msg = realm_create_serializer.req_load(msg)
 
@@ -151,7 +156,9 @@ class BaseRealmComponent:
             await self.create(client_ctx.organization_id, granted_role)
 
         except RealmNotFoundError as exc:
-            return realm_create_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+            return realm_create_serializer.rep_dump(
+                {"status": "not_found", "reason": str(exc)}
+            )
 
         except RealmAlreadyExistsError:
             return realm_create_serializer.rep_dump({"status": "already_exists"})
@@ -172,7 +179,9 @@ class BaseRealmComponent:
             return realm_status_serializer.rep_dump({"status": "not_allowed"})
 
         except RealmNotFoundError as exc:
-            return realm_status_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+            return realm_status_serializer.rep_dump(
+                {"status": "not_found", "reason": str(exc)}
+            )
 
         return realm_status_serializer.rep_dump(
             {
@@ -199,12 +208,15 @@ class BaseRealmComponent:
             return realm_status_serializer.rep_dump({"status": "not_allowed"})
 
         except RealmNotFoundError as exc:
-            return realm_status_serializer.rep_dump({"status": "not_found", "reason": str(exc)})
+            return realm_status_serializer.rep_dump(
+                {"status": "not_found", "reason": str(exc)}
+            )
 
         return realm_stats_serializer.rep_dump(
             {
                 "status": "ok",
                 "data_size": stats.data_size,
+                "metadata_size": stats.metadata_size,
             }
         )
 
@@ -218,7 +230,9 @@ class BaseRealmComponent:
             )
 
         except RealmAccessError:
-            return realm_get_role_certificates_serializer.rep_dump({"status": "not_allowed"})
+            return realm_get_role_certificates_serializer.rep_dump(
+                {"status": "not_allowed"}
+            )
 
         except RealmNotFoundError as exc:
             return realm_get_role_certificates_serializer.rep_dump(
@@ -338,7 +352,9 @@ class BaseRealmComponent:
                 {"status": "in_maintenance"}
             )
 
-        return realm_start_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
+        return realm_start_reencryption_maintenance_serializer.rep_dump(
+            {"status": "ok"}
+        )
 
     @api("realm_finish_reencryption_maintenance")
     @catch_protocol_errors
@@ -375,7 +391,9 @@ class BaseRealmComponent:
                 {"status": "maintenance_error", "reason": str(exc)}
             )
 
-        return realm_finish_reencryption_maintenance_serializer.rep_dump({"status": "ok"})
+        return realm_finish_reencryption_maintenance_serializer.rep_dump(
+            {"status": "ok"}
+        )
 
     async def create(
         self, organization_id: OrganizationID, self_granted_role: RealmGrantedRole

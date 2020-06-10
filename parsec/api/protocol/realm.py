@@ -70,6 +70,7 @@ class RealmStatsReqSchema(BaseReqSchema):
 
 class RealmStatsRepSchema(BaseRepSchema):
     data_size = fields.Integer(required=True)
+    metadata_size = fields.Integer(required=True)
 
 
 realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)
@@ -98,14 +99,18 @@ class RealmUpdateRolesRepSchema(BaseRepSchema):
     pass
 
 
-realm_update_roles_serializer = CmdSerializer(RealmUpdateRolesReqSchema, RealmUpdateRolesRepSchema)
+realm_update_roles_serializer = CmdSerializer(
+    RealmUpdateRolesReqSchema, RealmUpdateRolesRepSchema
+)
 
 
 class RealmStartReencryptionMaintenanceReqSchema(BaseReqSchema):
     realm_id = fields.UUID(required=True)
     encryption_revision = fields.Integer(required=True)
     timestamp = fields.DateTime(required=True)
-    per_participant_message = fields.Map(UserIDField(), fields.Bytes(required=True), required=True)
+    per_participant_message = fields.Map(
+        UserIDField(), fields.Bytes(required=True), required=True
+    )
 
 
 class RealmStartReencryptionMaintenanceRepSchema(BaseRepSchema):
@@ -113,7 +118,8 @@ class RealmStartReencryptionMaintenanceRepSchema(BaseRepSchema):
 
 
 realm_start_reencryption_maintenance_serializer = CmdSerializer(
-    RealmStartReencryptionMaintenanceReqSchema, RealmStartReencryptionMaintenanceRepSchema
+    RealmStartReencryptionMaintenanceReqSchema,
+    RealmStartReencryptionMaintenanceRepSchema,
 )
 
 
@@ -127,5 +133,6 @@ class RealmFinishReencryptionMaintenanceRepSchema(BaseRepSchema):
 
 
 realm_finish_reencryption_maintenance_serializer = CmdSerializer(
-    RealmFinishReencryptionMaintenanceReqSchema, RealmFinishReencryptionMaintenanceRepSchema
+    RealmFinishReencryptionMaintenanceReqSchema,
+    RealmFinishReencryptionMaintenanceRepSchema,
 )

@@ -9,23 +9,22 @@ from tests.backend.common import vlob_create, block_create
 
 @pytest.mark.trio
 async def test_realm_stats_ok(backend, alice_backend_sock, realm):
-    rep = await realm_stats(alice_backend_sock, realm_id=realm)
-    assert rep == {
-        "status": "ok",
-        "data_size": 0,
-    }
     # Create new metadata
     await vlob_create(alice_backend_sock, realm_id=realm, vlob_id=uuid4(), blob=b"1234")
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {
         "status": "ok",
-        "data_size": 4,
+        "data_size": 0,
+        "metadata_size": 4,
     }
 
     # Create new data
-    await block_create(alice_backend_sock, realm_id=realm, block_id=uuid4(), block=b"1234")
+    await block_create(
+        alice_backend_sock, realm_id=realm, block_id=uuid4(), block=b"1234"
+    )
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {
         "status": "ok",
-        "data_size": 8,
+        "data_size": 4,
+        "metadata_size": 4,
     }

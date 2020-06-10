@@ -30,6 +30,7 @@ from parsec.backend.message import BaseMessageComponent
 from parsec.backend.memory.vlob import MemoryVlobComponent
 from parsec.backend.memory.block import MemoryBlockComponent
 
+
 @attr.s
 class Realm:
     status: RealmStatus = attr.ib(factory=lambda: RealmStatus(None, None, None, 1))
@@ -110,12 +111,15 @@ class MemoryRealmComponent(BaseRealmComponent):
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
     ) -> RealmStats:
         RealmStats.data_size = 0
+        RealmStats.metadata_size = 0
         for (_, _), blockmeta_value in self._block_component._blockmetas.items():
             if blockmeta_value.realm_id == realm_id:
                 RealmStats.data_size += blockmeta_value.size
         for (_, _), vlobmeta_value in self._vlob_component._vlobs.items():
             if vlobmeta_value.realm_id == realm_id:
-                RealmStats.data_size += sum(len(blob) for (blob, _, _) in vlobmeta_value.data)
+                RealmStats.metadata_size += sum(
+                    len(blob) for (blob, _, _) in vlobmeta_value.data
+                )
 
         return RealmStats
 
@@ -255,7 +259,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         )
 
         for recipient, msg in per_participant_message.items():
-            await self._message_component.send(organization_id, author, recipient, timestamp, msg)
+            await self._message_component.send(
+                organization_id, author, recipient, timestamp, msg
+            )
 
     async def finish_reencryption_maintenance(
         self,
@@ -268,7 +274,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.roles.get(author.user_id) != RealmRole.OWNER:
             raise RealmAccessError()
         if not realm.status.in_maintenance:
-            raise RealmNotInMaintenanceError(f"Realm `{realm_id}` not under maintenance")
+            raise RealmNotInMaintenanceError(
+                f"Realm `{realm_id}` not under maintenance"
+            )
         if encryption_revision != realm.status.encryption_revision:
             raise RealmEncryptionRevisionError("Invalid encryption revision")
         if not self._vlob_component._maintenance_reencryption_is_finished_hook(
