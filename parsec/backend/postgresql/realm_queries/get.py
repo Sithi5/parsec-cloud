@@ -3,12 +3,17 @@
 import pendulum
 from uuid import UUID
 from typing import Dict, List
-from pypika import Parameter
+from pypika import Parameter, functions as fn
 
 from parsec.api.protocol import RealmRole
 from parsec.api.protocol import DeviceID, UserID, OrganizationID
-from parsec.backend.realm import RealmStatus, RealmAccessError, RealmNotFoundError
-from parsec.backend.postgresql.utils import query
+from parsec.backend.realm import (
+    RealmStatus,
+    RealmAccessError,
+    RealmNotFoundError,
+    RealmStats,
+)
+from parsec.backend.postgresql.utils import query, Query
 from parsec.backend.postgresql.tables import (
     STR_TO_REALM_ROLE,
     STR_TO_REALM_MAINTENANCE_TYPE,
@@ -18,13 +23,17 @@ from parsec.backend.postgresql.tables import (
     q_device,
     q_realm_internal_id,
     q_realm,
+    t_block,
+    t_vlob_atom,
 )
 
 
 _q_get_realm_status = (
     q_realm(organization_id=Parameter("$1"), realm_id=Parameter("$2")).select(
         q_user_can_read_vlob(
-            organization_id=Parameter("$1"), realm_id=Parameter("$2"), user_id=Parameter("$3")
+            organization_id=Parameter("$1"),
+            realm_id=Parameter("$2"),
+            user_id=Parameter("$3"),
         ).as_("has_access"),
         "encryption_revision",
         q_device(_id=Parameter("maintenance_started_by"))
@@ -33,6 +42,24 @@ _q_get_realm_status = (
         "maintenance_started_on",
         "maintenance_type",
     )
+).get_sql()
+
+_q_get_realm_stats = Query.select(
+    q_realm(organization_id=Parameter("$1"), realm_id=Parameter("$2")).select(
+        q_user_can_read_vlob(
+            organization_id=Parameter("$1"),
+            realm_id=Parameter("$2"),
+            user_id=Parameter("$3"),
+        ).as_("has_access")
+    ),
+    Query.from_(t_vlob_atom)
+    .where(t_vlob_atom.realm_id == Parameter("$1"))
+    .select(fn.Coalesce(fn.Sum(t_vlob_atom.size), 0))
+    .as_("metadata_size"),
+    Query.from_(t_vlob_atom)
+    .where(t_block.realm_id == Parameter("$1"))
+    .select(fn.Coalesce(fn.Sum(t_block.size), 0))
+    .as_("data_size"),
 ).get_sql()
 
 
@@ -73,7 +100,9 @@ ORDER BY realm, certified_on DESC
 async def query_get_status(
     conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
 ) -> RealmStatus:
-    ret = await conn.fetchrow(_q_get_realm_status, organization_id, realm_id, author.user_id)
+    ret = await conn.fetchrow(
+        _q_get_realm_status, organization_id, realm_id, author.user_id
+    )
     if not ret:
         raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
@@ -89,6 +118,22 @@ async def query_get_status(
 
 
 @query()
+async def query_get_stats(
+    conn, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
+) -> RealmStatus:
+    ret = await conn.fetchrow(
+        _q_get_realm_stats, organization_id, realm_id, author.user_id
+    )
+    if not ret:
+        raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
+
+    if not ret["has_access"]:
+        raise RealmAccessError()
+
+    return RealmStats(data_size=ret["data_size"], metadata_size=ret["metadata_size"],)
+
+
+@query()
 async def query_get_current_roles(
     conn, organization_id: OrganizationID, realm_id: UUID
 ) -> Dict[UserID, RealmRole]:
@@ -98,7 +143,11 @@ async def query_get_current_roles(
         # Existing group must have at least one owner user
         raise RealmNotFoundError(f"Realm `{realm_id}` doesn't exist")
 
-    return {UserID(user_id): STR_TO_REALM_ROLE[role] for user_id, role in ret if role is not None}
+    return {
+        UserID(user_id): STR_TO_REALM_ROLE[role]
+        for user_id, role in ret
+        if role is not None
+    }
 
 
 @query()
