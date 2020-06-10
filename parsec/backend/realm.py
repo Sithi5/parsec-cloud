@@ -82,7 +82,8 @@ class RealmStatus:
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RealmStats:
-    size: int
+    blocks_size: int
+    vlobs_size: int
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)

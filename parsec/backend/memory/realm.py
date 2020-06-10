@@ -110,6 +110,9 @@ class MemoryRealmComponent(BaseRealmComponent):
     async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: UUID
     ) -> RealmStats:
+        realm = self._get_realm(organization_id, realm_id)
+        if author.user_id not in realm.roles:
+            raise RealmAccessError()
         RealmStats.blocks_size = 0
         RealmStats.vlobs_size = 0
         for value in self._block_component._blockmetas.values():
