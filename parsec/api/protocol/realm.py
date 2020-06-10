@@ -69,8 +69,8 @@ class RealmStatsReqSchema(BaseReqSchema):
 
 
 class RealmStatsRepSchema(BaseRepSchema):
-    data_size = fields.Integer(required=True)
-    metadata_size = fields.Integer(required=True)
+    blocks_size = fields.Integer(required=True)
+    vlobs_size = fields.Integer(required=True)
 
 
 realm_stats_serializer = CmdSerializer(RealmStatsReqSchema, RealmStatsRepSchema)

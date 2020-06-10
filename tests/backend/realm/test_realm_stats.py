@@ -14,8 +14,8 @@ async def test_realm_stats_ok(backend, alice_backend_sock, realm):
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {
         "status": "ok",
-        "data_size": 0,
-        "metadata_size": 4,
+        "blocks_size": 0,
+        "vlobs_size": 4,
     }
 
     # Create new data
@@ -25,6 +25,6 @@ async def test_realm_stats_ok(backend, alice_backend_sock, realm):
     rep = await realm_stats(alice_backend_sock, realm_id=realm)
     assert rep == {
         "status": "ok",
-        "data_size": 4,
-        "metadata_size": 4,
+        "blocks_size": 4,
+        "vlobs_size": 4,
     }

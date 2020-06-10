@@ -215,8 +215,8 @@ class BaseRealmComponent:
         return realm_stats_serializer.rep_dump(
             {
                 "status": "ok",
-                "data_size": stats.data_size,
-                "metadata_size": stats.metadata_size,
+                "blocks_size": stats.blocks_size,
+                "vlobs_size": stats.vlobs_size,
             }
         )
 
