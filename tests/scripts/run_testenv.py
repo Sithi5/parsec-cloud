@@ -14,6 +14,7 @@ import pkg_resources
 pkg_resources.require("parsec-cloud[all]")
 
 import os
+import sys
 import re
 import tempfile
 import subprocess
@@ -31,7 +32,6 @@ from parsec.test_utils import initialize_test_organization
 
 DEFAULT_BACKEND_PORT = 6888
 DEFAULT_ADMINISTRATION_TOKEN = "V8VjaXrOz6gUC6ZEHPab0DSsjfq6DmcJ"
-
 
 # Helpers
 
@@ -118,13 +118,15 @@ MimeType=x-scheme-handler/parsec;
 """
     )
     await trio.run_process("update-desktop-database -q".split(), check=False)
-    await trio.run_process("xdg-mime default parsec.desktop x-scheme-handler/parsec".split())
+    await trio.run_process(
+        "xdg-mime default parsec.desktop x-scheme-handler/parsec".split()
+    )
 
 
 async def restart_local_backend(administration_token, backend_port):
     pattern = f"parsec.* backend.* run.* -P {backend_port}"
     command = (
-        f"python -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
+        f"{sys.executable} -Wignore -m parsec.cli backend run -b MOCKED --db MOCKED "
         f"-P {backend_port} --administration-token {administration_token}"
     )
 
@@ -150,7 +152,9 @@ async def restart_local_backend(administration_token, backend_port):
     else:
 
         await trio.run_process(["pkill", "-f", pattern], check=False)
-        backend_process = await trio.open_process(command.split(), stdout=subprocess.PIPE)
+        backend_process = await trio.open_process(
+            command.split(), stdout=subprocess.PIPE
+        )
         async with backend_process.stdout:
             async for data in backend_process.stdout:
                 print(data.decode(), end="")
@@ -164,16 +168,27 @@ async def restart_local_backend(administration_token, backend_port):
 
 @click.command()
 @click.option("-B", "--backend-address", type=BackendAddr.from_url)
-@click.option("-p", "--backend-port", show_default=True, type=int, default=DEFAULT_BACKEND_PORT)
-@click.option("-O", "--organization-id", show_default=True, type=OrganizationID, default="corp")
-@click.option("-a", "--alice-device-id", show_default=True, type=DeviceID, default="alice@laptop")
-@click.option("-b", "--bob-device-id", show_default=True, type=DeviceID, default="bob@laptop")
+@click.option(
+    "-p", "--backend-port", show_default=True, type=int, default=DEFAULT_BACKEND_PORT
+)
+@click.option(
+    "-O", "--organization-id", show_default=True, type=OrganizationID, default="corp"
+)
+@click.option(
+    "-a", "--alice-device-id", show_default=True, type=DeviceID, default="alice@laptop"
+)
+@click.option(
+    "-b", "--bob-device-id", show_default=True, type=DeviceID, default="bob@laptop"
+)
 @click.option("-o", "--other-device-name", show_default=True, default="pc")
 @click.option("-x", "--alice-workspace", show_default=True, default="alice_workspace")
 @click.option("-y", "--bob-workspace", show_default=True, default="bob_workspace")
 @click.option("-P", "--password", show_default=True, default="test")
 @click.option(
-    "-T", "--administration-token", show_default=True, default=DEFAULT_ADMINISTRATION_TOKEN
+    "-T",
+    "--administration-token",
+    show_default=True,
+    default=DEFAULT_ADMINISTRATION_TOKEN,
 )
 @click.option("--force/--no-force", show_default=True, default=False)
 @click.option("-e", "--empty", is_flag=True)
@@ -252,7 +267,9 @@ async def amain(
 
     # Start a local backend
     if backend_address is None:
-        backend_address = await restart_local_backend(administration_token, backend_port)
+        backend_address = await restart_local_backend(
+            administration_token, backend_port
+        )
         click.echo(
             f"""\
 A fresh backend server is now running: {backend_address}
