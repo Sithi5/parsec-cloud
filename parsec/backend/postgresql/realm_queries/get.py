@@ -52,12 +52,8 @@ _q_get_realm_stats = Query.select(
             user_id=Parameter("$3"),
         ).as_("has_access")
     ),
-    Query.from_(t_vlob_atom)
-    .where(t_vlob_atom.realm_id == Parameter("$1"))
-    .select(fn.Coalesce(fn.Sum(t_vlob_atom.size), 0))
-    .as_("metadata_size"),
     Query.from_(t_block)
-    .where(t_block.realm_id == Parameter("$1"))
+    .where(t_block.realm_id == Parameter("$2"))
     .select(fn.Coalesce(fn.Sum(t_block.size), 0))
     .as_("data_size"),
 ).get_sql()
@@ -130,7 +126,7 @@ async def query_get_stats(
     if not ret["has_access"]:
         raise RealmAccessError()
 
-    return RealmStats(data_size=ret["data_size"], metadata_size=ret["metadata_size"],)
+    return RealmStats(data_size=ret["data_size"], metadata_size=0,)
 
 
 @query()
