@@ -56,7 +56,7 @@ _q_get_realm_stats = Query.select(
     .where(t_vlob_atom.realm_id == Parameter("$1"))
     .select(fn.Coalesce(fn.Sum(t_vlob_atom.size), 0))
     .as_("metadata_size"),
-    Query.from_(t_vlob_atom)
+    Query.from_(t_block)
     .where(t_block.realm_id == Parameter("$1"))
     .select(fn.Coalesce(fn.Sum(t_block.size), 0))
     .as_("data_size"),
