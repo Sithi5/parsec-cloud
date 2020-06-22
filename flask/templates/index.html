@@ -1,0 +1,62 @@
+{% extends "layout.html" %} {% block title %}Index{% endblock %} {% block header %} {{ super() }}
+<link href="{{ url_for('static', filename='index.css') }}" rel="stylesheet" type="text/css" />{% endblock %} {% block body %}
+
+<div class="container admin-container text-center justify-content-md-center">
+    <div class="row admin-row">
+        <div class="col-md-6 admin-col">
+            <div class="panel panel-primary admin-panel">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Quick Shortcuts</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-6 col-md-6 admin-col-2">
+                            <form action="parsec_backend/link/" method="get">
+                                <div>
+                                    <label style="color: white" for="type">Quel type ?</label>
+                                    <input name="type" id="type" value="confirmAccount">
+                                </div>
+                                <div>
+                                    <label style="color: white" for="token">Quel token ?</label>
+                                    <input name="token" value="S3CRET">
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary btn-lg admin-btn" role="button"> <br/>Redirection vers Parsec GET</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-xs-6 col-md-6 admin-col-2">
+                            <form action="parsec_backend/link/" method="post">
+                                <div>
+                                    <label style="color: white" for="type">Quel type ?</label>
+                                    <input name="type" id="type" value="confirmAccount">
+                                </div>
+                                <div>
+                                    <label style="color: white" for="token">Quel token ?</label>
+                                    <input name="token" value="S3CRET">
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary btn-lg admin-btn" role="button"> <br/>Redirection vers Parsec POST</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-6 col-md-6 admin-col-2">
+                            <div>
+                                <a href="/google/" class="btn btn-primary btn-lg admin-btn" role="button"> <br/>Redirection vers google.com</a>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-md-6 admin-col-2">
+                            <div>
+                                <a href="/google/" class="btn btn-primary btn-lg admin-btn" role="button"> <br/>Redirection vers google.com</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
