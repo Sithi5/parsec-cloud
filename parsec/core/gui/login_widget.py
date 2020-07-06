@@ -5,8 +5,7 @@ from pathlib import Path
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget
 
-from parsec.core.local_device import list_available_devices
-from parsec.api.protocol import OrganizationID, DeviceID
+from parsec.core.local_device import list_available_devices, AvailableDevice
 
 from parsec.core.gui.lang import translate as _
 from parsec.core.gui.parsec_application import ParsecApp
@@ -18,36 +17,32 @@ from parsec.core.gui.ui.login_no_devices_widget import Ui_LoginNoDevicesWidget
 
 
 class AccountButton(QWidget, Ui_AccountButton):
-    clicked = pyqtSignal(OrganizationID, DeviceID, Path)
+    clicked = pyqtSignal(AvailableDevice)
 
-    def __init__(self, organization_id, device_id, key_file):
+    def __init__(self, device):
         super().__init__()
         self.setupUi(self)
-        self.organization_id = organization_id
-        self.device_id = device_id
-        self.key_file = key_file
-        self.label_device.setText(self.device_id.device_name)
-        self.label_name.setText(self.device_id.user_id)
-        self.label_organization.setText(self.organization_id)
-        if str(device_id.user_id) == "bob":
-            self.label_device.setText("Desktop")
-            self.label_name.setText("Maxime GRANDCOLAS <maxime.grandcolas@gmail.com>")
-            self.label_organization.setText("Scille")
+        self.device = device
+        self.label_device.setText(self.device.device_display)
+        self.label_name.setText(self.device.short_user_display)
+        self.label_organization.setText(self.device.organization_id)
 
     def mousePressEvent(self, event):
         if event.button() & Qt.LeftButton:
-            self.clicked.emit(self.organization_id, self.device_id, self.key_file)
+            self.clicked.emit(self.device)
 
 
 class LoginAccountsWidget(QWidget, Ui_LoginAccountsWidget):
-    account_clicked = pyqtSignal(OrganizationID, DeviceID, Path)
+    account_clicked = pyqtSignal(AvailableDevice)
 
     def __init__(self, devices):
         super().__init__()
         self.setupUi(self)
-        for o, d, t, kf in devices:
-            if not ParsecApp.is_device_connected(o, d):
-                ab = AccountButton(o, d, kf)
+        for available_device in devices:
+            if not ParsecApp.is_device_connected(
+                available_device.organization_id, available_device.device_id
+            ):
+                ab = AccountButton(available_device)
                 ab.clicked.connect(self.account_clicked.emit)
                 self.accounts_widget.layout().addWidget(ab)
 
@@ -56,17 +51,17 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
     back_clicked = pyqtSignal()
     log_in_clicked = pyqtSignal(Path, str)
 
-    def __init__(self, organization_id, device_id, key_file):
+    def __init__(self, device):
         super().__init__()
         self.setupUi(self)
-        self.key_file = key_file
+        self.device = device
         self.button_back.clicked.connect(self.back_clicked.emit)
         self.button_login.clicked.connect(self._on_log_in_clicked)
         self.label_instructions.setText(
             _("TEXT_LOGIN_ENTER_PASSWORD_INSTRUCTIONS_organization-device-user-email").format(
-                organization=organization_id,
-                user=device_id.user_id,
-                device=device_id.device_name,
+                organization=self.device.organization_id,
+                user=self.device.short_user_display,
+                device=self.device.device_display,
                 email="",
             )
         )
@@ -74,7 +69,7 @@ class LoginPasswordInputWidget(QWidget, Ui_LoginPasswordInputWidget):
     def _on_log_in_clicked(self):
         self.button_login.setDisabled(True)
         self.button_login.setText(_("ACTION_LOGGING_IN"))
-        self.log_in_clicked.emit(self.key_file, self.line_edit_password.text())
+        self.log_in_clicked.emit(self.device.key_file_path, self.line_edit_password.text())
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return and self.button_login.isEnabled():
@@ -103,7 +98,7 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
 
 
 class LoginWidget(QWidget, Ui_LoginWidget):
-    login_with_password_clicked = pyqtSignal(object, str)
+    login_with_password_clicked = pyqtSignal(Path, str)
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
 

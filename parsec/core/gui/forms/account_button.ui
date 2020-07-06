@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>356</width>
-    <height>80</height>
+    <height>90</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>80</height>
+    <height>90</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>80</height>
+    <height>90</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -36,6 +36,12 @@ QWidget#widget {
 	border-radius: 8px;
 	border: 1px solid #CCCCCC;
 }
+
+QWidget#widget:hover {
+	background-color: #F8F8F8;
+	border: 1px solid #999999;
+}
+
 QLabel {
 	color: #333333;
 }
@@ -67,16 +73,16 @@ QLabel {
        <number>20</number>
       </property>
       <property name="topMargin">
-       <number>6</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
        <number>20</number>
       </property>
       <property name="bottomMargin">
-       <number>6</number>
+       <number>10</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_organization">
+       <widget class="QLabel" name="label_name">
         <property name="font">
          <font>
           <pointsize>11</pointsize>
@@ -90,10 +96,12 @@ QLabel {
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_name">
+       <widget class="QLabel" name="label_organization">
         <property name="font">
          <font>
           <pointsize>11</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
