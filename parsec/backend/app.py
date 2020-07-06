@@ -25,6 +25,9 @@ from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 
+from parsec.backend.http import http_router
+
+import h11
 
 logger = get_logger()
 
@@ -93,11 +96,14 @@ class BackendApp:
             user, invite, organization, message, realm, vlob, ping, blockstore, block, events
         )
 
-    async def handle_client(self, stream):
+    async def handle_client_websocket(self, stream, event, first_request_data=None):
+        print("websocket request")
         selected_logger = logger
 
         try:
-            transport = await Transport.init_for_server(stream)
+            transport = await Transport.init_for_server(
+                stream, first_request_data=first_request_data
+            )
 
         except TransportClosedByPeer as exc:
             selected_logger.info("Connection dropped: client has left", reason=str(exc))
@@ -119,7 +125,6 @@ class BackendApp:
 
             try:
                 await stream.send_all(content + content_body)
-                await stream.aclose()
 
             except trio.BrokenResourceError:
                 # Stream is really dead, nothing else to do...
@@ -134,7 +139,6 @@ class BackendApp:
             client_ctx, error_infos = await do_handshake(self, transport)
             if not client_ctx:
                 # Invalid handshake
-                await stream.aclose()
                 selected_logger.info("Connection dropped: bad handshake", **error_infos)
                 return
 
@@ -203,6 +207,89 @@ class BackendApp:
                 pass
             await transport.aclose()
             selected_logger.info("Connection dropped: invalid data", reason=str(exc))
+
+    async def handle_client(self, stream):
+        MAX_RECV = 5
+        conn = h11.Connection(h11.SERVER)
+        first_request_data = b""
+        while True:
+            if conn.they_are_waiting_for_100_continue:
+                self.info("Sending 100 Continue")
+                go_ahead = h11.InformationalResponse(status_code=100, headers=self.basic_headers())
+                await self.send(go_ahead)
+            try:
+                data = await stream.receive_some(MAX_RECV)
+                first_request_data += data
+
+            except ConnectionError:
+                # They've stopped listening. Not much we can do about it here.
+                data = b""
+            conn.receive_data(data)
+
+            event = conn.next_event()
+            if event is not h11.NEED_DATA:
+                break
+
+        if not isinstance(event, h11.Request):
+            await stream.aclose()
+            return
+
+        # Websocket upgrade
+        try:
+
+            if (b"connection", b"Upgrade") in event.headers:
+                print("\n\n\nHERE\n\n\n")
+                await self.handle_client_websocket(
+                    stream, event, first_request_data=first_request_data
+                )
+            else:
+                # http
+                await self.handle_client_http(stream, event, conn)
+        finally:
+            try:
+                print("Closing here : ", id(stream))
+                await stream.aclose()
+            except trio.BrokenResourceError:
+                # They're already gone, nothing to do
+                pass
+
+    async def handle_client_http(self, stream, event, conn):
+        print("\nHTTP request")
+
+        router = http_router()
+        controller = await router.is_route(event.target)
+        if controller:
+            status_code, headers, data = await controller(event.target)
+        else:
+            controller = router.get_404_controller()
+            status_code, headers, data = await controller()
+        from parsec._version import __version__ as parsec_version
+        from wsgiref.handlers import format_date_time
+
+        headers.append(("Date", format_date_time(None).encode("ascii")))
+        headers.append(("Server", f"parsec/{parsec_version} {h11.PRODUCT_ID}"))
+        headers.append(("Content-Length", str(len(data))))
+        res = h11.Response(status_code=status_code, headers=headers)
+        await stream.send_all(conn.send(res))
+        await stream.send_all(conn.send(h11.Data(data=data)))
+        await stream.send_all(conn.send(h11.EndOfMessage()))
+
+    async def _handle_http_static_request(self, request):
+        import importlib
+        import mimetypes
+
+        name = (request.target.decode("ascii", errors="ignore")).replace("/", "")
+        try:
+            data = importlib.resources.read_binary("parsec.backend.http.static", name)
+            content_type, _ = mimetypes.guess_type(name)
+            if content_type:
+                headers = {"Content-Type": f"content-type: {content_type}; charset=utf-8"}
+            else:
+                headers = {}
+            return 200, headers, data
+
+        except Exception:
+            return 404, {}, b""
 
     async def _handle_client_loop(self, transport, client_ctx):
         # Retrieve the allowed commands according to api version and auth type

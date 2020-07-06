@@ -1,0 +1,14 @@
+<html>
+
+<head>
+    {% block head %}
+    <title>{% block title %} Parsec - {% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="https://www.parsec.cloud/css/main.css">
+    <link rel="icon" href="https://www.parsec.cloud/favicon.ico" /> {% endblock %}
+</head>
+
+<body class="home">
+    {% block body %}{% include './navbar/navbar.html' %}{% endblock %}
+</body>
+
+</html>
