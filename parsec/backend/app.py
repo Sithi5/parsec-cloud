@@ -7,6 +7,7 @@ from structlog import get_logger
 from logging import DEBUG as LOG_LEVEL_DEBUG
 from async_generator import asynccontextmanager
 
+
 from parsec.event_bus import EventBus
 from parsec.logging import get_log_level
 from parsec.api.transport import TransportError, TransportClosedByPeer, Transport
@@ -25,9 +26,13 @@ from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 
-from parsec.backend.http import http_router
+from parsec.backend.http import http_controller
+
 
 import h11
+
+ADDR_TEST = "localhost"
+PORT_TEST = 6888
 
 logger = get_logger()
 
@@ -256,19 +261,9 @@ class BackendApp:
     async def handle_client_http(self, stream, event, conn):
         print("\nHTTP request")
 
-        router = http_router()
-        controller = await router.is_route(event.target)
-        if controller:
-            status_code, headers, data = await controller(event.target)
-        else:
-            controller = router.get_404_controller()
-            status_code, headers, data = await controller()
-        from parsec._version import __version__ as parsec_version
-        from wsgiref.handlers import format_date_time
+        controller = http_controller(ADDR_TEST, PORT_TEST)
+        status_code, headers, data = await controller(event.target)
 
-        headers.append(("Date", format_date_time(None).encode("ascii")))
-        headers.append(("Server", f"parsec/{parsec_version} {h11.PRODUCT_ID}"))
-        headers.append(("Content-Length", str(len(data))))
         res = h11.Response(status_code=status_code, headers=headers)
         await stream.send_all(conn.send(res))
         await stream.send_all(conn.send(h11.Data(data=data)))

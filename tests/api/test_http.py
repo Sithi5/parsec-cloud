@@ -23,8 +23,6 @@ async def test_send_http_request(running_backend):
     rep = await stream.receive_some()
     print(rep)
 
-    # todo : the assert rep
-
 
 @pytest.mark.trio
 async def test_send_http_request_to_rest_invite_no_invitation_type(running_backend):

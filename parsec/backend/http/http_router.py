@@ -1,11 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
-from parsec.backend.http.http_controller import http_invite_redirect, http_404
 
 mapping = [
-    (rb"^/api/invite(.*)$", http_invite_redirect),
-    (rb"^/api/test(.*)$", http_invite_redirect),
+    (rb"^/api/invite(.*)$", "http_invite_redirect"),
+    (rb"^/api/test(.*)$", "http_test_redirect"),
 ]
 
 
@@ -20,34 +19,32 @@ class http_router:
         return self._mapping
 
     async def is_route(self, url: bytes):
-        """Return the corresponding controller if the url match a mapping route.
+        """Return the corresponding method_name if the url match a mapping route.
 
         if no route found, return None
         """
         match = None
-        for regex, controller in self._mapping:
-            if match:
-                break
+        for regex, method_name in self._mapping:
             match = re.match(regex, url)
-        if match:
-            return controller
+            if match:
+                return method_name
         return None
 
-    async def get_controller(self, url: bytes):
-        """ Same as is_route but raise an HTTPNoRouteFound error if no route found"""
-        controller = await self.is_route(url)
-        if not controller:
-            controller = self.get_404_controller()
-        return controller
+    async def get_method_name(self, url: bytes):
+        """ Same as is_route but get 404 method_name if no other route found"""
+        method_name = await self.is_route(url)
+        if not method_name:
+            method_name = self.get_404_method_name()
+        return method_name
 
-    def get_404_controller(self):
-        """Return the 404 controller"""
-        return http_404
+    def get_404_method_name(self):
+        """Return the 404 method_name"""
+        return "http_404"
 
-    async def get_regexs_from_controller(self, test_controller=None):
-        """Return all mapping regexs matching with the controller"""
+    async def get_regexs_from_method_name(self, test_method_name=None):
+        """Return all mapping regexs matching with the method_name"""
         regexs = []
-        for regex, controller in self._mapping:
-            if controller == test_controller:
+        for regex, method_name in self._mapping:
+            if method_name == test_method_name:
                 regexs.append(regex)
         return regexs
