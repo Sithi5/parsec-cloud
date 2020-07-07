@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 from pendulum import Pendulum, now as pendulum_now
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Union
 
 from parsec.utils import timestamps_in_the_ballpark
 from parsec.crypto import HashDigest, CryptoError
@@ -11,6 +11,10 @@ from parsec.api.data import (
     BlockAccess,
     RealmRoleCertificateContent,
     Manifest as RemoteManifest,
+    FileManifest,
+    WorkspaceManifest,
+    UserManifest,
+    FolderManifest,
 )
 from parsec.core.backend_connection import BackendConnectionError, BackendNotAvailable
 from parsec.core.types import EntryID, ChunkID
@@ -27,6 +31,8 @@ from parsec.core.fs.exceptions import (
     FSWorkspaceNoReadAccess,
     FSWorkspaceNoWriteAccess,
 )
+
+RemoteManifests = Union[FileManifest, WorkspaceManifest, UserManifest, FolderManifest]
 
 
 class RemoteLoader:
@@ -92,7 +98,7 @@ class RemoteLoader:
                 key=lambda x: x[0].timestamp,
             )
 
-            current_roles = {}
+            current_roles: Dict[UserID, RealmRole] = {}
             owner_only = (RealmRole.OWNER,)
             owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
 
@@ -110,7 +116,7 @@ class RemoteLoader:
                 existing_user_role = current_roles.get(unsecure_certif.user_id)
                 if not current_roles and unsecure_certif.user_id == author.device_id.user_id:
                     # First user is autosigned
-                    needed_roles = (None,)
+                    needed_roles: Tuple[Optional[RealmRole], ...] = (None,)
                 elif (
                     existing_user_role in owner_or_manager
                     or unsecure_certif.role in owner_or_manager
@@ -118,6 +124,7 @@ class RemoteLoader:
                     needed_roles = owner_only
                 else:
                     needed_roles = owner_or_manager
+                # TODO: typing, author is optional in base.py but it seems that manifests always have an author (no RVK)
                 if current_roles.get(unsecure_certif.author.user_id) not in needed_roles:
                     raise FSError(
                         f"Invalid realm role certificates: "
@@ -247,7 +254,7 @@ class RemoteLoader:
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: int = None,
+        version: Optional[int] = None,
         timestamp: Pendulum = None,
         expected_backend_timestamp: Pendulum = None,
     ) -> RemoteManifest:
@@ -389,7 +396,7 @@ class RemoteLoader:
         elif rep["status"] != "ok":
             raise FSError(f"Cannot create realm {realm_id}: `{rep['status']}`")
 
-    async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifest):
+    async def upload_manifest(self, entry_id: EntryID, manifest: RemoteManifests):
         """
         Raises:
             FSError
@@ -522,7 +529,7 @@ class RemoteLoaderTimestamped(RemoteLoader):
     async def load_manifest(
         self,
         entry_id: EntryID,
-        version: int = None,
+        version: Optional[int] = None,
         timestamp: Pendulum = None,
         expected_backend_timestamp: Pendulum = None,
     ) -> RemoteManifest:
