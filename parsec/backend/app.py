@@ -26,7 +26,7 @@ from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 
-from parsec.backend.http import http_controller
+from parsec.backend.http.http_router import http_get_method
 
 
 import h11
@@ -241,7 +241,6 @@ class BackendApp:
 
         # Websocket upgrade
         try:
-
             if (b"connection", b"Upgrade") in event.headers:
                 print("\n\n\nHERE\n\n\n")
                 await self.handle_client_websocket(
@@ -261,9 +260,11 @@ class BackendApp:
     async def handle_client_http(self, stream, event, conn):
         print("\nHTTP request")
 
-        controller = http_controller(ADDR_TEST, PORT_TEST)
-        status_code, headers, data = await controller(event.target)
+        method = await http_get_method(event.target)
+        print("method = ", method)
+        status_code, headers, data = await method(event.target)
 
+        print("data is : ", data)
         res = h11.Response(status_code=status_code, headers=headers)
         await stream.send_all(conn.send(res))
         await stream.send_all(conn.send(h11.Data(data=data)))
