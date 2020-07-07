@@ -261,10 +261,8 @@ class BackendApp:
         print("\nHTTP request")
 
         method = await http_get_method(event.target)
-        print("method = ", method)
         status_code, headers, data = await method(event.target)
 
-        print("data is : ", data)
         res = h11.Response(status_code=status_code, headers=headers)
         await stream.send_all(conn.send(res))
         await stream.send_all(conn.send(h11.Data(data=data)))
