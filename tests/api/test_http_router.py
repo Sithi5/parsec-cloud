@@ -14,20 +14,19 @@ from parsec.backend.http.http_controller import http_404, http_invite_redirect
 async def test_is_route():
     # test is_method with existent route
     assert (
-        await http_is_route(b"/api/invite?organization_id=thisistheorganizationid123456789")
-        is not None
+        http_is_route(b"/api/invite?organization_id=thisistheorganizationid123456789") is not None
     )
     # test is_method with non existent route
-    assert await http_is_route(b"fakeroute") is None
+    assert http_is_route(b"fakeroute") is None
 
 
 @pytest.mark.trio
 async def test_get_method():
     # test get_method with existent route
-    method = await http_get_method(b"/api/invite")
+    method = http_get_method(b"/api/invite")
     assert method == http_invite_redirect
     # test get_method with non existent route
-    method = await http_get_method(b"fakeroute")
+    method = http_get_method(b"fakeroute")
     assert method == http_404
 
 
@@ -41,8 +40,8 @@ async def test_get_404_method():
 @pytest.mark.trio
 async def test_get_regexs_from_method():
     # test get_regexs_from_method with existent method
-    regexs = await http_get_regexs_from_method(http_invite_redirect)
+    regexs = http_get_regexs_from_method(http_invite_redirect)
     assert regexs == [b"^/api/invite(.*)$"]
     # test get_regexs_from_method with no input method
-    regexs = await http_get_regexs_from_method()
+    regexs = http_get_regexs_from_method()
     assert regexs == []

@@ -260,8 +260,8 @@ class BackendApp:
     async def handle_client_http(self, stream, event, conn):
         print("\nHTTP request")
 
-        method = await http_get_method(event.target)
-        status_code, headers, data = await method(event.target)
+        method = http_get_method(event.target)
+        status_code, headers, data = method(event.target)
 
         res = h11.Response(status_code=status_code, headers=headers)
         await stream.send_all(conn.send(res))

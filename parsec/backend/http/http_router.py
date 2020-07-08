@@ -1,14 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPLv3 2019 Scille SAS
 
 import re
-from parsec.backend.http.http_controller import http_404, http_invite_redirect, http_test_redirect
+from parsec.backend.http.http_controller import http_404, http_invite_redirect
 
 
 # callback sur fonction
-mapping = [(rb"^/api/invite(.*)$", http_invite_redirect), (rb"^/api/test(.*)$", http_test_redirect)]
+mapping = [(rb"^/api/invite(.*)$", http_invite_redirect)]
 
 
-async def http_is_route(url: bytes):
+def http_is_route(url: bytes):
     """Return the corresponding method if the url match a mapping route.
     if no route found, return None
     """
@@ -20,9 +20,9 @@ async def http_is_route(url: bytes):
     return None
 
 
-async def http_get_method(url: bytes):
+def http_get_method(url: bytes):
     """ Same as is_route but get 404 method if no other route found"""
-    method = await http_is_route(url)
+    method = http_is_route(url)
     if not method:
         method = http_get_404_method()
     return method
@@ -33,7 +33,7 @@ def http_get_404_method():
     return http_404
 
 
-async def http_get_regexs_from_method(test_method=None):
+def http_get_regexs_from_method(test_method=None):
     """Return all mapping regexs matching with the method"""
     regexs = []
     for regex, method in mapping:
