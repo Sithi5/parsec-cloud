@@ -9,9 +9,9 @@ import jinja2
 import h11
 
 
+# need to find a way to render the favicon and css files
 def render_jinja_html(template_loc, file_name, **context):
     """Render html template with jinja"""
-    # use package loader instead of filesystemloader
     jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_loc + "/"))
     jinja2_template = jinja2_env.get_template(file_name)
     jinja2_template_render = jinja2_template.render(context)
@@ -51,11 +51,6 @@ def http_redirect_to_parsec(url: bytes, config: BackendConfig, *arg, **kwarg):
 def http_404(*arg, **kwarg):
     """Return the 404 view"""
     status_code = 404
-    # voir comment mettre
     template = render_jinja_html("parsec/backend/http/static", "404.html")
     data = template.encode("utf-8")
     return status_code, set_http_headers(data=data), data
-
-
-# todo
-# create_parsec_addr > config_backend_addr BackendAddr

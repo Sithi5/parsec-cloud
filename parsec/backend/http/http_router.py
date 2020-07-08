@@ -5,7 +5,6 @@ from parsec.backend.http.http_controller import http_404, http_redirect_to_parse
 from parsec.backend.config import BackendConfig
 
 
-# callback sur fonction a mettre en place
 mapping = [(rb"^/api/invite(.*)$", http_redirect_to_parsec)]
 
 
