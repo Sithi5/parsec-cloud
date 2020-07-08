@@ -26,13 +26,9 @@ from parsec.backend.handshake import do_handshake
 from parsec.backend.memory import components_factory as mocked_components_factory
 from parsec.backend.postgresql import components_factory as postgresql_components_factory
 
-from parsec.backend.http.http_router import http_get_method
-
+from parsec.backend.http.http_router import http_get_method_and_execute
 
 import h11
-
-ADDR_TEST = "localhost"
-PORT_TEST = 6888
 
 logger = get_logger()
 
@@ -260,9 +256,7 @@ class BackendApp:
     async def handle_client_http(self, stream, event, conn):
         print("\nHTTP request")
 
-        method = http_get_method(event.target)
-        status_code, headers, data = method(event.target)
-
+        status_code, headers, data = http_get_method_and_execute(event.target, self.config)
         res = h11.Response(status_code=status_code, headers=headers)
         await stream.send_all(conn.send(res))
         await stream.send_all(conn.send(h11.Data(data=data)))

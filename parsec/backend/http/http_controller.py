@@ -2,12 +2,11 @@
 from urllib.parse import urlparse
 from parsec._version import __version__ as parsec_version
 from wsgiref.handlers import format_date_time
+from parsec.core.types import BackendAddr
+from parsec.backend.config import BackendConfig
 
 import jinja2
 import h11
-
-ADDR_TEST = "localhost"
-PORT_TEST = 6888
 
 
 def render_jinja_html(template_loc, file_name, **context):
@@ -19,9 +18,14 @@ def render_jinja_html(template_loc, file_name, **context):
     return jinja2_template_render
 
 
-def create_parsec_url():
-    """Return parsec url with the backend_addr and backend_port"""
-    return "parsec://" + str(ADDR_TEST) + ":" + str(PORT_TEST) + "/"
+def create_parsec_url(config: BackendConfig):
+    """Return parsec url from backend_addr if exist, otherwise create one"""
+    if not config.backend_addr:
+        backend_addr = BackendAddr(hostname="localhost", port=6888)
+    else:
+        backend_addr = config.backend_addr
+
+    return backend_addr.to_url()
 
 
 def set_http_headers(data, headers=[]):
@@ -33,16 +37,14 @@ def set_http_headers(data, headers=[]):
     return headers
 
 
-def http_invite_redirect(url: bytes):
+def http_redirect_to_parsec(url: bytes, config: BackendConfig, *arg, **kwarg):
     """Redirect the http invite request to a parsec url request"""
-    try:
-        parsed_url = urlparse(url)
-        query_string = parsed_url.query.decode("utf-8")
-        location = create_parsec_url() + query_string
-        headers = [("location", location)]
-        data = b""
-    except ValueError:
-        return
+    location = create_parsec_url(config=config) + "/"
+    parsed_url = urlparse(url)
+    query_string = parsed_url.query.decode("utf-8")
+    location = location + query_string
+    headers = [("location", location)]
+    data = b""
     return 302, set_http_headers(headers=headers, data=data), data
 
 
