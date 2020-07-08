@@ -150,14 +150,14 @@ def merge_manifests(
 
     # Only the remote has changed
     if not local_manifest.need_sync:
-        return LocalManifest.from_remote(remote_manifest)
+        return local_manifest.from_local_and_remote(remote_manifest)
 
     # Both the remote and the local have changed
     assert remote_version > local_version and local_manifest.need_sync
 
     # All the local changes have been successfully uploaded
     if local_manifest.match_remote(remote_manifest):
-        return LocalManifest.from_remote(remote_manifest)
+        return local_manifest.from_local_and_remote(remote_manifest)
 
     # The remote changes are ours, simply acknowledge them and keep our local changes
     if remote_manifest.author == local_author:
@@ -223,6 +223,15 @@ class SyncTransactions(EntryTransactions):
 
         # Fetch and lock
         async with self.local_storage.lock_manifest(entry_id) as local_manifest:
+
+            # Manifest for a confined entry
+            if is_file_manifest(local_manifest):
+                parent_manifest = await self.local_storage.get_manifest(local_manifest.parent)
+                if entry_id in parent_manifest.confined_entries:
+                    if local_manifest.need_sync:
+                        new_local_manifest = local_manifest.evolve(need_sync=False)
+                        await self.local_storage.set_manifest(entry_id, new_local_manifest)
+                    return None
 
             # Sync cannot be performed yet
             if not final and is_file_manifest(local_manifest) and not local_manifest.is_reshaped():

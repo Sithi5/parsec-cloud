@@ -149,6 +149,11 @@ class EntryTransactions(FileTransactions):
             # Release the lock and download the child manifest
             await self._load_manifest(entry_id)
 
+    # Confinement helpers
+
+    def match_confined_pattern(self, path):
+        return path.name.endswith(".tmp")
+
     # Transactions
 
     async def entry_info(self, path: FsPath) -> dict:
@@ -224,6 +229,16 @@ class EntryTransactions(FileTransactions):
                 {destination.name: source_entry_id, source.name: None}
             )
 
+            # Update confined entries
+            old_confined = source_entry_id in parent.confined_entries
+            new_confined = self.match_confined_pattern(destination)
+            if not old_confined and new_confined:
+                new_confined_entries = parent.confined_entries | {source_entry_id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+            if old_confined and not new_confined:
+                new_confined_entries = parent.confined_entries - {source_entry_id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
 
@@ -255,6 +270,11 @@ class EntryTransactions(FileTransactions):
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
+            # Update confined_entries
+            if child.id in parent.confined_entries:
+                new_confined_entries = parent.confined_entries - {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
 
@@ -282,6 +302,11 @@ class EntryTransactions(FileTransactions):
             # Create new manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: None})
 
+            # Update confined_entries
+            if child.id in parent.confined_entries:
+                new_confined_entries = parent.confined_entries - {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
+
             # Atomic change
             await self.local_storage.set_manifest(parent.id, new_parent)
 
@@ -307,6 +332,11 @@ class EntryTransactions(FileTransactions):
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
+
+            # Filtering
+            if self.match_confined_pattern(path):
+                new_confined_entries = parent.confined_entries | {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
@@ -335,6 +365,11 @@ class EntryTransactions(FileTransactions):
 
             # New parent manifest
             new_parent = parent.evolve_children_and_mark_updated({path.name: child.id})
+
+            # Filtering
+            if self.match_confined_pattern(path):
+                new_confined_entries = parent.confined_entries | {child.id}
+                new_parent = new_parent.evolve(confined_entries=new_confined_entries)
 
             # ~ Atomic change
             await self.local_storage.set_manifest(child.id, child, check_lock_status=False)
