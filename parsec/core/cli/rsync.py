@@ -89,9 +89,9 @@ async def _clear_directory(
     local_children_keys = [p.name for p in await local_path.iterdir()]
     for name, entry_id in folder_manifest.children.items():
         if name not in local_children_keys:
-            absolute_path = FsPath(str(await (workspace_directory_path / name).absolute()))
+            absolute_path = await (workspace_directory_path / name).absolute()
             print("delete %s" % absolute_path)
-            await _clear_path(workspace_fs, absolute_path)
+            await _clear_path(workspace_fs, absolute_path.as_posix())
 
 
 async def _get_or_create_directory(
