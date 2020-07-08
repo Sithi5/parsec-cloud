@@ -243,8 +243,8 @@ class BootstrapOrganizationWidget(QWidget, Ui_BootstrapOrganizationWidget):
             self.button_bootstrap.setDisabled(True)
 
     @classmethod
-    def exec_modal(cls, jobs_ctx, config, addr, parent):
-        w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr)
+    def exec_modal(cls, jobs_ctx, config, addr, email, parent):
+        w = cls(jobs_ctx=jobs_ctx, config=config, addr=addr, email=email)
         d = GreyedDialog(w, _("TEXT_BOOTSTRAP_ORG_TITLE"), parent=parent)
         w.dialog = d
         w.line_edit_login.setFocus()
