@@ -5,7 +5,7 @@ import trio
 
 
 @pytest.mark.trio
-async def test_send_http_request(running_backend):
+async def test_send_http_request_invalid_route(running_backend):
     stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
     await stream.send_all(
         b"GET / HTTP/1.1\r\n"
@@ -21,34 +21,20 @@ async def test_send_http_request(running_backend):
         b"\r\n"
     )
     rep = await stream.receive_some()
-    print(rep)
+    rep = rep.decode("utf-8")
+    assert "HTTP/1.1 404" in rep
 
 
 @pytest.mark.trio
-async def test_send_http_request_to_rest_invite_no_invitation_type(running_backend):
+async def test_send_http_request_to_redirect(running_backend):
     stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
     await stream.send_all(
-        b"GET /api/invite?organization_id=thisistheorganizationid123456789&token=S3CRET&no_ssl=true HTTP/1.0\r\n\r\n"
+        b"GET /api/redirect?organization_id=thisistheorganizationid123456789&invitation_type=invitation_type&token=S3CRET&no_ssl=true HTTP/1.0\r\n\r\n"
     )
     rep = await stream.receive_some()
-    print(rep)
-    # assert re.search(b"HTTP/1.1 400", rep) is not None
-
-
-@pytest.mark.trio
-async def test_send_http_request_to_rest_false_route(running_backend):
-    stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(b"GET /api/false HTTP/1.0\r\n\r\n")
-    rep = await stream.receive_some()
-    print(rep)
-    # assert re.search(b"HTTP/1.1 400", rep) is not None
-
-
-@pytest.mark.trio
-async def test_send_http_request_to_rest_invite_valid(running_backend):
-    stream = await trio.open_tcp_stream(running_backend.addr.hostname, running_backend.addr.port)
-    await stream.send_all(
-        b"GET /api/invite?organization_id=thisistheorganizationid123456789&invitation_type=invitation_type&token=S3CRET&no_ssl=true HTTP/1.0\r\n\r\n"
+    rep = rep.decode("utf-8")
+    assert (
+        "location: parsec://localhost:6888/organization_id=thisistheorganizationid123456789&invitation_type=invitation_type&token=S3CRET&no_ssl=true"
+        in rep
     )
-    rep = await stream.receive_some()
-    print(rep)
+    assert "HTTP/1.1 302" in rep

@@ -7,7 +7,7 @@ from parsec.backend.http.http_router import (
     http_get_regexs_from_method,
     http_is_route,
 )
-from parsec.backend.http.http_controller import http_404, http_invite_redirect
+from parsec.backend.http.http_controller import http_404, http_redirect_to_parsec
 
 
 @pytest.mark.trio
@@ -24,7 +24,7 @@ async def test_is_route():
 async def test_get_method():
     # test get_method with existent route
     method = http_get_method(b"/api/invite")
-    assert method == http_invite_redirect
+    assert method == http_redirect_to_parsec
     # test get_method with non existent route
     method = http_get_method(b"fakeroute")
     assert method == http_404
@@ -40,7 +40,7 @@ async def test_get_404_method():
 @pytest.mark.trio
 async def test_get_regexs_from_method():
     # test get_regexs_from_method with existent method
-    regexs = http_get_regexs_from_method(http_invite_redirect)
+    regexs = http_get_regexs_from_method(http_redirect_to_parsec)
     assert regexs == [b"^/api/invite(.*)$"]
     # test get_regexs_from_method with no input method
     regexs = http_get_regexs_from_method()

@@ -5,7 +5,7 @@ from parsec.backend.http.http_controller import http_404, http_redirect_to_parse
 from parsec.backend.config import BackendConfig
 
 
-mapping = [(rb"^/api/invite(.*)$", http_redirect_to_parsec)]
+mapping = [(rb"^/api/redirect(.*)$", http_redirect_to_parsec)]
 
 
 def http_get_method(url: bytes):
